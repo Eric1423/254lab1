@@ -79,11 +79,10 @@ echo "    50% target:    $(( PEAK / 2 )) flops/cycle"
 echo "============================================="
 echo ""
 
-# Force rebuild since we copied new files
 CONFIGS="$CONFIGS" ./ci/blackbox.sh \
     --driver=$DRIVER \
     --clusters=$CLUSTERS \
     --cores=$CORES \
     --app=sgemm \
     --args="-n$MATRIX_SIZE" \
-    --rebuild=1
+   

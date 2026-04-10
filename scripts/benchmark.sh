@@ -70,7 +70,7 @@ for i in "${!SIZES[@]}"; do
     echo "------------------------------------------------------------"
 
     OUTPUT=$(CONFIGS="$CONFIGS" ./ci/blackbox.sh --driver=simx --cores=1 \
-        --app=sgemm --args="-n$N" --rebuild=1 2>&1)
+        --app=sgemm --args="-n$N" 2>&1)
 
     if echo "$OUTPUT" | grep -q "PASSED"; then
         CYCLES=$(echo "$OUTPUT" | grep "^PERF:" | tail -1 | sed 's/.*cycles=\([0-9]*\).*/\1/')
