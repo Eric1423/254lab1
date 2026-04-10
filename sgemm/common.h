@@ -5,7 +5,12 @@
 #define TYPE float
 #endif
 
-typedef struct {
+#ifndef TILE_SIZE
+#define TILE_SIZE 4 // match NUM_THREADS
+#endif
+
+typedef struct
+{
   uint32_t grid_dim[2];
   uint32_t size;
   uint64_t A_addr;
