@@ -75,22 +75,13 @@ if ! grep -q "toolchain_env.sh" ~/.bashrc 2>/dev/null; then
     echo "  Added toolchain_env.sh to ~/.bashrc"
 fi
 
-# ---- Step 6: Copy SGEMM baseline files ----
+# ---- Step 6: Copy lab files into Vortex ----
 echo ""
-echo "[6/7] Copying SGEMM files..."
-
-# Copy to baseline/ (reference, don't touch)
-cp "$SGEMM_SRC/kernel.cpp" "$LAB_DIR/baseline/"
-cp "$SGEMM_SRC/main.cpp"   "$LAB_DIR/baseline/"
-cp "$SGEMM_SRC/common.h"   "$LAB_DIR/baseline/"
-cp "$LAB_DIR/configs/VX_config.toml" "$LAB_DIR/baseline/"
-echo "  Copied baseline files to $LAB_DIR/baseline/"
-
-# Copy to sgemm/ (student workspace)
-cp "$SGEMM_SRC/kernel.cpp" "$LAB_DIR/sgemm/"
-cp "$SGEMM_SRC/main.cpp"   "$LAB_DIR/sgemm/"
-cp "$SGEMM_SRC/common.h"   "$LAB_DIR/sgemm/"
-echo "  Copied working files to $LAB_DIR/sgemm/"
+echo "[6/7] Copying SGEMM files into Vortex..."
+cp "$LAB_DIR/sgemm/kernel.cpp" "$SGEMM_SRC/"
+cp "$LAB_DIR/sgemm/main.cpp"   "$SGEMM_SRC/"
+cp "$LAB_DIR/sgemm/common.h"   "$SGEMM_SRC/"
+echo "  Copied sgemm/ files into $SGEMM_SRC/"
 
 # ---- Step 7: Run baseline test ----
 echo ""
