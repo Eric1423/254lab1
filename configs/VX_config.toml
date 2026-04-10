@@ -1,30 +1,16 @@
-# =============================================================================
-# VX_config.toml - Vortex Hardware Configuration
-# =============================================================================
-# Peak = 2 * NUM_THREADS * NUM_FPU_BLOCKS  (flops/cycle per core)
-# Goal: achieve >= 50% of peak on single core
-# =============================================================================
-
-# --- Hardware parameters (passed as -D flags) ---
-
-
 [core]
 NUM_THREADS = 4
-NUM_WARPS = 8         # more warps to hide memory latency
+NUM_WARPS = 8
 NUM_FPU_BLOCKS = 1
 NUM_ALU_BLOCKS = 1
 NUM_LSU_BLOCKS = 1
 ISSUE_WIDTH = 1
 
 [cache]
-DCACHE_SIZE = 16384   # larger data cache (16KB)
-SMEM_SIZE = 8192      # larger shared memory for tiles
-L2_ENABLE = true      # enable L2
+DCACHE_SIZE = 16384
+SMEM_SIZE = 8192
+L2_ENABLE = true
 
-
-# --- Simulation parameters (passed as --flags to blackbox.sh) ---
-# NOTE: cores=1 and matrix_size=64 are FIXED for grading.
-#       Do not change cores. You may change matrix_size for testing.
 [simulation]
 driver = "simx"
 cores = 1
