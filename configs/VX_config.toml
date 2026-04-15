@@ -8,7 +8,7 @@ ISSUE_WIDTH = 1
 
 [cache]
 DCACHE_SIZE = 65536
-SMEM_SIZE = 8192
+SMEM_SIZE = 4096
 L2_ENABLE = true
 
 [simulation]

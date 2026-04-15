@@ -15,11 +15,9 @@
      if (0 == _ret)                                             \
        break;                                                   \
      printf("Error: '%s' returned %d!\n", #_expr, (int)_ret);   \
-	 cleanup();			                                              \
+     cleanup();                                                 \
      exit(-1);                                                  \
    } while (false)
-
-///////////////////////////////////////////////////////////////////////////////
 
 template <typename Type>
 class Comparator {};
@@ -27,17 +25,11 @@ class Comparator {};
 template <>
 class Comparator<int> {
 public:
-  static const char* type_str() {
-    return "integer";
-  }
-  static int generate() {
-    return rand();
-  }
+  static const char* type_str() { return "integer"; }
+  static int generate() { return rand(); }
   static bool compare(int a, int b, int index, int errors) {
     if (a != b) {
-      if (errors < 100) {
-        printf("*** error: [%d] expected=%d, actual=%d\n", index, b, a);
-      }
+      if (errors < 100) printf("*** error: [%d] expected=%d, actual=%d\n", index, b, a);
       return false;
     }
     return true;
@@ -47,12 +39,8 @@ public:
 template <>
 class Comparator<float> {
 public:
-  static const char* type_str() {
-    return "float";
-  }
-  static float generate() {
-    return static_cast<float>(rand()) / RAND_MAX;
-  }
+  static const char* type_str() { return "float"; }
+  static float generate() { return static_cast<float>(rand()) / RAND_MAX; }
   static bool compare(float a, float b, int index, int errors) {
     union fi_t { float f; int32_t i; };
     fi_t fa, fb;
@@ -60,9 +48,7 @@ public:
     fb.f = b;
     auto d = std::abs(fa.i - fb.i);
     if (d > FLOAT_ULP) {
-      if (errors < 100) {
-        printf("*** error: [%d] expected=%f, actual=%f\n", index, b, a);
-      }
+      if (errors < 100) printf("*** error: [%d] expected=%f, actual=%f\n", index, b, a);
       return false;
     }
     return true;
@@ -101,19 +87,10 @@ static void parse_args(int argc, char **argv) {
   int c;
   while ((c = getopt(argc, argv, "n:k:h")) != -1) {
     switch (c) {
-    case 'n':
-      size = atoi(optarg);
-      break;
-    case 'k':
-      kernel_file = optarg;
-      break;
-    case 'h':
-      show_usage();
-      exit(0);
-      break;
-    default:
-      show_usage();
-      exit(-1);
+    case 'n': size = atoi(optarg); break;
+    case 'k': kernel_file = optarg; break;
+    case 'h': show_usage(); exit(0); break;
+    default: show_usage(); exit(-1);
     }
   }
 }
@@ -130,12 +107,9 @@ void cleanup() {
 }
 
 int main(int argc, char *argv[]) {
-  // parse command arguments
   parse_args(argc, argv);
-
   std::srand(50);
 
-  // open device connection
   std::cout << "open device connection" << std::endl;
   RT_CHECK(vx_dev_open(&device));
 
@@ -145,11 +119,14 @@ int main(int argc, char *argv[]) {
   std::cout << "data type: " << Comparator<TYPE>::type_str() << std::endl;
   std::cout << "matrix size: " << size << "x" << size << std::endl;
 
-  kernel_arg.grid_dim[0] = size;
-  kernel_arg.grid_dim[1] = size;
+  // Each thread computes TILE_Y x TILE_X block
+  kernel_arg.grid_dim[0] = size / TILE_X;
+  kernel_arg.grid_dim[1] = size / TILE_Y;
   kernel_arg.size = size;
 
-  // allocate device memory
+  std::cout << "grid: " << kernel_arg.grid_dim[0] << "x" << kernel_arg.grid_dim[1] << std::endl;
+  std::cout << "tile: " << TILE_X << "x" << TILE_Y << std::endl;
+
   std::cout << "allocate device memory" << std::endl;
   RT_CHECK(vx_mem_alloc(device, buf_size, VX_MEM_READ, &A_buffer));
   RT_CHECK(vx_mem_address(A_buffer, &kernel_arg.A_addr));
@@ -162,7 +139,6 @@ int main(int argc, char *argv[]) {
   std::cout << "B_addr=0x" << std::hex << kernel_arg.B_addr << std::endl;
   std::cout << "C_addr=0x" << std::hex << kernel_arg.C_addr << std::endl;
 
-  // generate source data
   std::vector<TYPE> h_A(size_sq);
   std::vector<TYPE> h_B(size_sq);
   std::vector<TYPE> h_C(size_sq);
@@ -171,33 +147,23 @@ int main(int argc, char *argv[]) {
     h_B[i] = Comparator<TYPE>::generate();
   }
 
-  // upload matrix A buffer
-  {
-    std::cout << "upload matrix A buffer" << std::endl;
-    RT_CHECK(vx_copy_to_dev(A_buffer, h_A.data(), 0, buf_size));
-  }
+  std::cout << "upload matrix A buffer" << std::endl;
+  RT_CHECK(vx_copy_to_dev(A_buffer, h_A.data(), 0, buf_size));
 
-  // upload matrix B buffer
-  {
-    std::cout << "upload matrix B buffer" << std::endl;
-    RT_CHECK(vx_copy_to_dev(B_buffer, h_B.data(), 0, buf_size));
-  }
+  std::cout << "upload matrix B buffer" << std::endl;
+  RT_CHECK(vx_copy_to_dev(B_buffer, h_B.data(), 0, buf_size));
 
-  // Upload kernel binary
   std::cout << "Upload kernel binary" << std::endl;
   RT_CHECK(vx_upload_kernel_file(device, kernel_file, &krnl_buffer));
 
-  // upload kernel argument
   std::cout << "upload kernel argument" << std::endl;
   RT_CHECK(vx_upload_bytes(device, &kernel_arg, sizeof(kernel_arg_t), &args_buffer));
 
   auto time_start = std::chrono::high_resolution_clock::now();
 
-  // start device
   std::cout << "start device" << std::endl;
   RT_CHECK(vx_start(device, krnl_buffer, args_buffer));
 
-  // wait for completion
   std::cout << "wait for completion" << std::endl;
   RT_CHECK(vx_ready_wait(device, VX_MAX_TIMEOUT));
 
@@ -205,17 +171,14 @@ int main(int argc, char *argv[]) {
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start).count();
   printf("Elapsed time: %lg ms\n", elapsed);
 
-  // download destination buffer
   std::cout << "download destination buffer" << std::endl;
   RT_CHECK(vx_copy_from_dev(h_C.data(), C_buffer, 0, buf_size));
 
-  // verify result
   std::cout << "verify result" << std::endl;
   int errors = 0;
   {
     std::vector<TYPE> h_ref(size_sq);
     matmul_cpu(h_ref.data(), h_A.data(), h_B.data(), size, size);
-
     for (uint32_t i = 0; i < h_ref.size(); ++i) {
       if (!Comparator<TYPE>::compare(h_C[i], h_ref[i], i, errors)) {
         ++errors;
@@ -223,7 +186,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // cleanup
   std::cout << "cleanup" << std::endl;
   cleanup();
 
@@ -234,6 +196,5 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << "PASSED!" << std::endl;
-
   return 0;
 }

@@ -5,6 +5,14 @@
 #define TYPE float
 #endif
 
+#ifndef TILE_X
+#define TILE_X 4
+#endif
+
+#ifndef TILE_Y
+#define TILE_Y 4
+#endif
+
 typedef struct {
   uint32_t grid_dim[2];
   uint32_t size;
